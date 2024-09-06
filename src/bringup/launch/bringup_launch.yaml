@@ -1,0 +1,31 @@
+launch:
+
+- arg:
+    name: "next_match_api"
+    default: "https://rims.tourobo.net"
+- arg:
+    name: "competition_id"
+- arg:
+    name: "api_key"
+
+- include:
+    file: "$(find-pkg-share foxglove_bridge)/launch/foxglove_bridge_launch.xml"
+    arg:
+    -
+      name: "port"
+      value: "8765"
+
+- node:
+    pkg: "state_manager"
+    exec: "state_manager"
+    name: "state_manager"
+    param:
+    -
+      name: "next_match_api"
+      value: "$(var next_match_api)"
+    -
+      name: "competition_id"
+      value: "$(var competition_id)"
+    -
+      name: "api_key"
+      value: "$(var api_key)"

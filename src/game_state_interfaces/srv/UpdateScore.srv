@@ -1,0 +1,15 @@
+# UpdateScore.srv
+
+# command一覧
+int32 IS_AUTO=0  # 0 or 1
+int32 SEEDLINGS=1       # num of seedlings m5 a10
+int32 IMMIGRATION=2     # 0 or 1            15
+int32 TYPE_1_A=3        # 0 or 1           mrp5 a10
+int32 TYPE_1_B=4        # 0 or 1
+int32 TYPE_2=5          # 0 or 1           mrp10 a20
+int32 V_GOAL=6          # 0 or 1
+
+int32 command
+int32 data
+---
+bool result

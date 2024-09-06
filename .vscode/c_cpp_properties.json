@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "/opt/ros/humble/include/**",
+                "/usr/include/**",
+                "/usr/local/include/**",
+                "${env:HOME}/tut_general_ws/Torobo2024_game_management_ws/install/**",
+                "${env:HOME}/tut_general_ws/Torobo2024_game_management_ws/src/**",
+                "${env:HOME}/tut_general_ws/Torobo2024_game_management_ws/src/state_manager/**"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "linux-gcc-x64"
+        }
+    ],
+    "version": 4
+}
