@@ -25,6 +25,9 @@ ament_auto_find_build_dependencies()
 ament_auto_add_library(${PROJECT_NAME}_component SHARED
   src/${PROJECT_NAME}_component.cpp
 )
+target_compile_definitions(${PROJECT_NAME}_component
+  PRIVATE CPPHTTPLIB_OPENSSL_SUPPORT
+)
 target_link_libraries(${PROJECT_NAME}_component
   OpenSSL::SSL
   OpenSSL::Crypto

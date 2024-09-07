@@ -1,14 +1,11 @@
 #pragma once
 
-#define CPPHTTPLIB_OPENSSL_SUPPORT
-
-#include <httplib.h>
-
 #include <algorithm>
 #include <game_state_interfaces/msg/match.hpp>
 #include <game_state_interfaces/msg/team.hpp>
 #include <game_state_interfaces/srv/end_match.hpp>
 #include <game_state_interfaces/srv/update_score.hpp>
+#include <httplib.h>
 #include <nlohmann/json.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <std_srvs/srv/empty.hpp>
