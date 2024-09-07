@@ -251,6 +251,11 @@ public:
   void reset_match(const std_srvs::srv::Empty::Request::SharedPtr, const std_srvs::srv::Empty::Response::SharedPtr) { init_match(); }
 
   void red_update_score(const game_state_interfaces::srv::UpdateScore::Request::SharedPtr req, const game_state_interfaces::srv::UpdateScore::Response::SharedPtr res) {
+    if (_is_match_ready() && (req->command == game_state_interfaces::srv::UpdateScore::Request::IS_AUTO)) {
+      current_match_.red_team.is_auto = static_cast<bool>(req->data);
+      res->result = true;
+      return;
+    }
     if (!_is_match_running()) {
       res->result = false;
       return;
@@ -260,6 +265,11 @@ public:
   }
 
   void blue_update_score(const game_state_interfaces::srv::UpdateScore::Request::SharedPtr req, const game_state_interfaces::srv::UpdateScore::Response::SharedPtr res) {
+    if (_is_match_ready() && (req->command == game_state_interfaces::srv::UpdateScore::Request::IS_AUTO)) {
+      current_match_.blue_team.is_auto = static_cast<bool>(req->data);
+      res->result = true;
+      return;
+    }
     if (!_is_match_running()) {
       res->result = false;
       return;
