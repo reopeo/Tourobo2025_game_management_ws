@@ -8,6 +8,13 @@ launch:
 - arg:
     name: "api_key"
 
+- include:
+    file: "$(find-pkg-share foxglove_bridge)/launch/foxglove_bridge_launch.xml"
+    arg:
+    -
+      name: "port"
+      value: "8765"
+
 - node:
     pkg: "state_manager"
     exec: "state_manager"
@@ -22,21 +29,3 @@ launch:
     -
       name: "api_key"
       value: "$(var api_key)"
-
-- node:
-    pkg: "foxglove_bridge"
-    exec: "foxglove_bridge"
-    name: "foxglove_bridge_main"
-    param:
-    -
-      name: "port"
-      value: 8765
-
-- node:
-    pkg: "foxglove_bridge"
-    exec: "foxglove_bridge"
-    name: "foxglove_bridge_sub"
-    param:
-    -
-      name: "port"
-      value: 8766
