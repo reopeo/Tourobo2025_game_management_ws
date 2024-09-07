@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <builtin_interfaces/msg/time.hpp>
 #include <game_state_interfaces/msg/match.hpp>
 #include <game_state_interfaces/msg/team.hpp>
 #include <game_state_interfaces/srv/end_match.hpp>
@@ -35,6 +36,7 @@ private:
   std::string api_key_;
 
   rclcpp::Publisher<game_state_interfaces::msg::Match>::SharedPtr match_status_pub_;
+  rclcpp::Publisher<builtin_interfaces::msg::Time>::SharedPtr ore_ore_clock_pub_;
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr load_next_map_srv_;
   rclcpp::Service<std_srvs::srv::Empty>::SharedPtr start_match_srv_;
   rclcpp::Service<game_state_interfaces::srv::EndMatch>::SharedPtr end_match_srv_;
@@ -125,6 +127,7 @@ public:
     api_key_ = this->declare_parameter<std::string>("api_key");
 
     match_status_pub_ = this->create_publisher<game_state_interfaces::msg::Match>("/match/status", rclcpp::QoS(10).keep_last(10));
+    ore_ore_clock_pub_ = this->create_publisher<builtin_interfaces::msg::Time>("/match/clock", rclcpp::QoS(10));
     load_next_map_srv_ =
         this->create_service<std_srvs::srv::Empty>("/match/load_next", std::bind(&StateManager::load_next_match, this, std::placeholders::_1, std::placeholders::_2));
     start_match_srv_ = this->create_service<std_srvs::srv::Empty>("/match/start", std::bind(&StateManager::start_match, this, std::placeholders::_1, std::placeholders::_2));
@@ -317,6 +320,9 @@ public:
   }
 
   void dump_current_state() {
+    builtin_interfaces::msg::Time now_msg = this->get_clock()->now();
+    ore_ore_clock_pub_->publish(now_msg);
+
     RCLCPP_INFO(this->get_logger(), "===================");
     if (_is_match_confirmed()) {
       RCLCPP_INFO(this->get_logger(), "no match data");
