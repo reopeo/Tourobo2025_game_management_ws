@@ -4,9 +4,9 @@ string id
 string title
 
 # team color
-int32 RED = 0
-int32 BLUE = 1
-int32 UNKNOWN = 2
+int32 UNKNOWN = 0
+int32 RED = 1
+int32 BLUE = 2
 
 builtin_interfaces/Time start_time
 builtin_interfaces/Time end_time

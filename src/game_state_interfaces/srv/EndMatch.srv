@@ -1,9 +1,9 @@
 # EndMatch.srv
 
 # referee call team
-int32 RED=0
-int32 BLUE=1
-int32 NONE=2
+int32 NONE=0
+int32 RED=1
+int32 BLUE=2
 
 int32 referee_call
 ---
