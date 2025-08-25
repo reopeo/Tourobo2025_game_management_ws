@@ -146,11 +146,11 @@ public:
   }
 
   void load_next_match(const std_srvs::srv::Empty_Request::SharedPtr, const std_srvs::srv::Empty_Response::SharedPtr) {
-    nlohmann::json body = {
-        {"competitionID", competition_id_},
-        {"api_key", api_key_},
+    httplib::Headers headers = {
+      {"Authorization", "Bearer " + api_key_}
     };
-    auto res = tourobo_cli_->Post("/interface/api/nextmatch.php", body.dump(), "application/json");
+    std::string url = "/api/v2/alignment/get_match/?id=" + competition_id_;
+    auto res = tourobo_cli_->Get(url.c_str(), headers);
     if (res) {
       nlohmann::json res_body = nlohmann::json::parse(res->body);
 
@@ -158,17 +158,20 @@ public:
       game_state_interfaces::msg::Team red_team;
       game_state_interfaces::msg::Team blue_team;
 
-      red_team.name = res_body["match"]["zone1"]["name"];
-      red_team.university = res_body["match"]["zone1"]["organization"];
-      red_team.id = res_body["match"]["zone1"]["teamID"];
-      blue_team.name = res_body["match"]["zone2"]["name"];
-      blue_team.university = res_body["match"]["zone2"]["organization"];
-      blue_team.id = res_body["match"]["zone2"]["teamID"];
+      // 1試合のみ取得
+      const auto& match_json = res_body["match"][0];
+
+      red_team.name = match_json["zone1"]["name"];
+      red_team.university = match_json["zone1"]["organization"];
+      red_team.id = match_json["zone1"]["id"];
+      blue_team.name = match_json["zone2"]["name"];
+      blue_team.university = match_json["zone2"]["organization"];
+      blue_team.id = match_json["zone2"]["id"];
 
       match.red_team = red_team;
       match.blue_team = blue_team;
-      match.id = res_body["match"]["gameID"];
-      match.title = res_body["match"]["title"];
+      match.id = match_json["gameID"];
+      match.title = match_json["title"];
       if (!_match_already_set(match)) {
         current_match_ = match;
         init_match();
@@ -301,7 +304,12 @@ public:
         {"vgole_time", winner.v_goal ? time_sec : 0},
     };
 
-    auto res = tourobo_cli_->Post("/interface/api/update_match.php", body.dump(), "application/json");
+    // v2 APIパスに変更
+    httplib::Headers headers = {
+      {"Authorization", "Bearer " + api_key_}
+    };
+    std::string url = "/api/v2/alignment/update_match/?id=" + competition_id_;
+    auto res = tourobo_cli_->Post(url.c_str(), headers, body.dump(), "application/json");
     if (res) {
       RCLCPP_INFO(this->get_logger(), "last match successfully confirmed");
       is_match_confirmed_ = true;
