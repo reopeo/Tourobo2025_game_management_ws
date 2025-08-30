@@ -12,20 +12,12 @@
 #include <std_srvs/srv/empty.hpp>
 #include <unordered_map>
 
-namespace torobo2024 {
+namespace tourobo2024 {
 namespace Score {
-namespace MANUAL {
-constexpr int SEEDLINGS = 5;
-constexpr int IMMIGRATION = 15;
-constexpr int TYPE_1 = 5;
-constexpr int TYPE_2 = 10;
-}; // namespace MANUAL
-namespace AUTO {
-constexpr int SEEDLINGS = 10;
-constexpr int IMMIGRATION = 15;
+constexpr int UNLOCK = 10;
 constexpr int TYPE_1 = 10;
 constexpr int TYPE_2 = 20;
-}; // namespace AUTO
+constexpr int TYPE_3 = 50;
 }; // namespace Score
 class StateManager : public rclcpp::Node {
 private:
@@ -66,23 +58,35 @@ private:
   void update_score(game_state_interfaces::msg::Team &team, game_state_interfaces::srv::UpdateScore::Request::SharedPtr req) {
     using ScoreCmd = game_state_interfaces::srv::UpdateScore::Request;
     switch (req->command) {
-    case ScoreCmd::IS_AUTO:
-      team.is_auto = static_cast<bool>(req->data);
-      break;
-    case ScoreCmd::SEEDLINGS:
-      team.seedlings += req->data;
-      break;
-    case ScoreCmd::IMMIGRATION:
-      team.immigration = req->data;
+    case ScoreCmd::UNLOCK:
+      team.unlock += req->data;
       break;
     case ScoreCmd::TYPE_1_A:
-      team.type_1_a = req->data;
+      team.type_1_a += req->data;
       break;
     case ScoreCmd::TYPE_1_B:
-      team.type_1_b = req->data;
+      team.type_1_b += req->data;
       break;
-    case ScoreCmd::TYPE_2:
-      team.type_2 = req->data;
+    case ScoreCmd::TYPE_1_C:
+      team.type_1_c += req->data;
+      break;
+    case ScoreCmd::TYPE_2_A:
+      team.type_2_a += req->data;
+      break;
+    case ScoreCmd::TYPE_2_B:
+      team.type_2_b += req->data;
+      break;
+    case ScoreCmd::TYPE_2_C:
+      team.type_2_c += req->data;
+      break;
+    case ScoreCmd::TYPE_3_A:
+      team.type_3_a += req->data;
+      break;
+    case ScoreCmd::TYPE_3_B:
+      team.type_3_b += req->data;
+      break;
+    case ScoreCmd::TYPE_3_C:
+      team.type_3_c += req->data;
       break;
     case ScoreCmd::V_GOAL:
       team.v_goal = req->data;
@@ -95,22 +99,15 @@ private:
     }
 
     // score calculation
-    int seedling_score = 0;
-    int immigration_score = 0;
+    int unlock_score = 0;
     int type1_score = 0;
     int type2_score = 0;
-    if (team.is_auto) {
-      seedling_score = team.seedlings * Score::AUTO::SEEDLINGS;
-      immigration_score = team.immigration * Score::AUTO::IMMIGRATION;
-      type1_score = (team.type_1_a * Score::AUTO::TYPE_1) + (team.type_1_b * Score::AUTO::TYPE_1);
-      type2_score = team.type_2 * Score::AUTO::TYPE_2;
-    } else {
-      seedling_score = team.seedlings * Score::MANUAL::SEEDLINGS;
-      immigration_score = team.immigration * Score::MANUAL::IMMIGRATION;
-      type1_score = team.type_1_a * Score::MANUAL::TYPE_1 + team.type_1_b * Score::MANUAL::TYPE_2;
-      type2_score = team.type_2 * Score::MANUAL::TYPE_2;
-    }
-    team.score = seedling_score + immigration_score + type1_score + type2_score;
+    int type3_score = 0;
+    unlock_score = team.unlock * Score::UNLOCK;
+    type1_score = team.type_1_a * Score::TYPE_1 + team.type_1_b * Score::TYPE_1 + team.type_1_c * Score::TYPE_1;
+    type2_score = team.type_2_a * Score::TYPE_2 + team.type_2_b * Score::TYPE_2 + team.type_2_c * Score::TYPE_2;
+    type3_score = team.type_3_a * Score::TYPE_3 + team.type_3_b * Score::TYPE_3 + team.type_3_c * Score::TYPE_3;
+    team.score = unlock_score + type1_score + type2_score + type3_score;
   }
 
 public:
@@ -146,9 +143,7 @@ public:
   }
 
   void load_next_match(const std_srvs::srv::Empty_Request::SharedPtr, const std_srvs::srv::Empty_Response::SharedPtr) {
-    httplib::Headers headers = {
-      {"Authorization", "Bearer " + api_key_}
-    };
+    httplib::Headers headers = {{"Authorization", "Bearer " + api_key_}};
     std::string url = "/api/v2/alignment/get_match/?id=" + competition_id_;
     auto res = tourobo_cli_->Get(url.c_str(), headers);
     if (res) {
@@ -159,7 +154,7 @@ public:
       game_state_interfaces::msg::Team blue_team;
 
       // 1試合のみ取得
-      const auto& match_json = res_body["match"][0];
+      const auto &match_json = res_body["match"][0];
 
       red_team.name = match_json["zone1"]["name"];
       red_team.university = match_json["zone1"]["organization"];
@@ -190,20 +185,27 @@ public:
     is_match_confirmed_ = false;
 
     current_match_.winner = game_state_interfaces::msg::Match::UNKNOWN;
-    current_match_.red_team.is_auto = false;
-    current_match_.red_team.seedlings = 0;
-    current_match_.red_team.immigration = false;
-    current_match_.red_team.type_1_a = false;
-    current_match_.red_team.type_1_b = false;
-    current_match_.red_team.type_2 = false;
+    current_match_.red_team.unlock = 0;
+    current_match_.red_team.type_1_a = 0;
+    current_match_.red_team.type_1_b = 0;
+    current_match_.red_team.type_1_c = 0;
+    current_match_.red_team.type_2_a = 0;
+    current_match_.red_team.type_2_b = 0;
+    current_match_.red_team.type_2_c = 0;
+    current_match_.red_team.type_3_a = 0;
+    current_match_.red_team.type_3_b = 0;
+    current_match_.red_team.type_3_c = 0;
     current_match_.red_team.v_goal = false;
     current_match_.red_team.score = 0;
-    current_match_.blue_team.is_auto = false;
-    current_match_.blue_team.seedlings = 0;
-    current_match_.blue_team.immigration = false;
-    current_match_.blue_team.type_1_a = false;
-    current_match_.blue_team.type_1_b = false;
-    current_match_.blue_team.type_2 = false;
+    current_match_.blue_team.unlock = 0;
+    current_match_.blue_team.type_1_a = 0;
+    current_match_.blue_team.type_1_b = 0;
+    current_match_.blue_team.type_2_a = 0;
+    current_match_.blue_team.type_2_b = 0;
+    current_match_.blue_team.type_2_c = 0;
+    current_match_.blue_team.type_3_a = 0;
+    current_match_.blue_team.type_3_b = 0;
+    current_match_.blue_team.type_3_c = 0;
     current_match_.blue_team.v_goal = false;
     current_match_.blue_team.score = 0;
 
@@ -257,8 +259,7 @@ public:
   void reset_match(const std_srvs::srv::Empty::Request::SharedPtr, const std_srvs::srv::Empty::Response::SharedPtr) { init_match(); }
 
   void red_update_score(const game_state_interfaces::srv::UpdateScore::Request::SharedPtr req, const game_state_interfaces::srv::UpdateScore::Response::SharedPtr res) {
-    if (_is_match_ready() && (req->command == game_state_interfaces::srv::UpdateScore::Request::IS_AUTO)) {
-      current_match_.red_team.is_auto = static_cast<bool>(req->data);
+    if (_is_match_ready()) {
       res->result = true;
       return;
     }
@@ -271,8 +272,7 @@ public:
   }
 
   void blue_update_score(const game_state_interfaces::srv::UpdateScore::Request::SharedPtr req, const game_state_interfaces::srv::UpdateScore::Response::SharedPtr res) {
-    if (_is_match_ready() && (req->command == game_state_interfaces::srv::UpdateScore::Request::IS_AUTO)) {
-      current_match_.blue_team.is_auto = static_cast<bool>(req->data);
+    if (_is_match_ready()) {
       res->result = true;
       return;
     }
@@ -305,9 +305,7 @@ public:
     };
 
     // v2 APIパスに変更
-    httplib::Headers headers = {
-      {"Authorization", "Bearer " + api_key_}
-    };
+    httplib::Headers headers = {{"Authorization", "Bearer " + api_key_}};
     std::string url = "/api/v2/alignment/update_match/?id=" + competition_id_;
     auto res = tourobo_cli_->Post(url.c_str(), headers, body.dump(), "application/json");
     if (res) {
@@ -369,4 +367,4 @@ public:
     RCLCPP_INFO(this->get_logger(), "===================");
   }
 };
-} // namespace torobo2024
+} // namespace tourobo2024

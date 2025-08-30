@@ -3,14 +3,18 @@
 string name
 string id
 string university
-bool is_auto
 
 # achievement
-int32 seedlings 
-bool immigration 
-bool type_1_a    
-bool type_1_b    
-bool type_2      
+int32 unlock
+int32 type_1_a
+int32 type_1_b
+int32 type_1_c
+int32 type_2_a
+int32 type_2_b
+int32 type_2_c
+int32 type_3_a
+int32 type_3_b
+int32 type_3_c
 bool v_goal      
 
 # total score

@@ -1,13 +1,17 @@
 # UpdateScore.srv
 
 # command一覧
-int32 IS_AUTO=0  # 0 or 1
-int32 SEEDLINGS=1       # num of seedlings m5 a10
-int32 IMMIGRATION=2     # 0 or 1            15
-int32 TYPE_1_A=3        # 0 or 1           mrp5 a10
-int32 TYPE_1_B=4        # 0 or 1
-int32 TYPE_2=5          # 0 or 1           mrp10 a20
-int32 V_GOAL=6          # 0 or 1
+int32 UNLOCK=0      # num of unlock
+int32 TYPE_1_A=1    # num of bingo spot
+int32 TYPE_1_B=2
+int32 TYPE_1_C=3
+int32 TYPE_2_A=4
+int32 TYPE_2_B=5
+int32 TYPE_2_C=6
+int32 TYPE_3_A=7
+int32 TYPE_3_B=8
+int32 TYPE_3_C=9
+int32 V_GOAL=10     # 0 or 1
 
 int32 command
 int32 data

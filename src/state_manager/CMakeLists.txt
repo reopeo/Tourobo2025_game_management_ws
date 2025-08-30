@@ -34,7 +34,7 @@ target_link_libraries(${PROJECT_NAME}_component
   nlohmann_json::nlohmann_json
 )
 rclcpp_components_register_node(${PROJECT_NAME}_component
-  PLUGIN "torobo2024::StateManager"
+  PLUGIN "tourobo2024::StateManager"
   EXECUTABLE ${PROJECT_NAME}
 )
 

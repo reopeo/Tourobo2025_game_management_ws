@@ -2,4 +2,4 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
 
-RCLCPP_COMPONENTS_REGISTER_NODE(torobo2024::StateManager)
+RCLCPP_COMPONENTS_REGISTER_NODE(tourobo2024::StateManager)
