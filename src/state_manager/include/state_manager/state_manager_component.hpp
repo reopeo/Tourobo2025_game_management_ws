@@ -48,6 +48,10 @@ private:
   // Ownership grid: 0 = none, 1 = red, 2 = blue
   int grid_owner_[3][3] = {{0}}; // [row][col], type_1_a = [0][0], type_1_b = [0][1], ..., type_3_c = [2][2]
 
+  // Track first unlock time for each team (seconds since match start, -1 if not yet)
+  double red_unlock_time_ = -1;
+  double blue_unlock_time_ = -1;
+
   // Helper: get cell count for a team
   int get_cell_count(const game_state_interfaces::msg::Team &team, int row, int col) {
     if (row == 0 && col == 0)
@@ -137,6 +141,24 @@ private:
     return bingo_count;
   }
 
+  // Count spot ownership for a team (total, type3, type2, type1)
+  void count_spots(int team_id, int &total, int &type3, int &type2, int &type1) {
+    total = type3 = type2 = type1 = 0;
+    for (int row = 0; row < 3; ++row) {
+      for (int col = 0; col < 3; ++col) {
+        if (grid_owner_[row][col] == team_id) {
+          ++total;
+          if (row == 2)
+            ++type3;
+          else if (row == 1)
+            ++type2;
+          else if (row == 0)
+            ++type1;
+        }
+      }
+    }
+  }
+
   bool _match_already_set(game_state_interfaces::msg::Match &m) { return current_match_.id == m.id; }
 
   bool _is_match_ready() { return !is_match_start_ && !is_match_confirmed_; }
@@ -151,6 +173,13 @@ private:
     using ScoreCmd = game_state_interfaces::srv::UpdateScore::Request;
     switch (req->command) {
     case ScoreCmd::UNLOCK:
+      // Record first unlock time for each team
+      if (&team == &current_match_.red_team && team.unlock == 0 && req->data > 0 && red_unlock_time_ < 0) {
+        red_unlock_time_ = (this->get_clock()->now() - rclcpp::Time(current_match_.start_time)).seconds();
+      }
+      if (&team == &current_match_.blue_team && team.unlock == 0 && req->data > 0 && blue_unlock_time_ < 0) {
+        blue_unlock_time_ = (this->get_clock()->now() - rclcpp::Time(current_match_.start_time)).seconds();
+      }
       team.unlock += req->data;
       break;
     case ScoreCmd::TYPE_1_A:
@@ -412,6 +441,18 @@ public:
     auto winner = current_match_.winner == game_state_interfaces::msg::Match::RED ? current_match_.red_team : current_match_.blue_team;
     int time_sec = static_cast<int>(std::floor((rclcpp::Time(current_match_.end_time) - rclcpp::Time(current_match_.start_time)).seconds()));
 
+    // Calculate additional scores for both teams
+    int red_bingo_count = count_bingo(1);
+    int blue_bingo_count = count_bingo(2);
+
+    int red_spot_total, red_type3, red_type2, red_type1;
+    int blue_spot_total, blue_type3, blue_type2, blue_type1;
+    count_spots(1, red_spot_total, red_type3, red_type2, red_type1);
+    count_spots(2, blue_spot_total, blue_type3, blue_type2, blue_type1);
+
+    int red_unlock_score = current_match_.red_team.unlock * Score::UNLOCK;
+    int blue_unlock_score = current_match_.blue_team.unlock * Score::UNLOCK;
+
     nlohmann::json body = {
         {"competitionID", competition_id_},
         {"api_key", api_key_},
@@ -420,6 +461,24 @@ public:
         {"winner", current_match_.winner == game_state_interfaces::msg::Match::RED ? "zone1" : "zone2"},
         {"zone1_score", current_match_.red_team.score},
         {"zone2_score", current_match_.blue_team.score},
+        // Additional scores for red team
+        {"zone1_score_additional_1", red_bingo_count},
+        {"zone1_score_additional_2", red_spot_total},
+        {"zone1_score_additional_3", red_type3},
+        {"zone1_score_additional_4", red_type2},
+        {"zone1_score_additional_5", red_type1},
+        {"zone1_score_additional_6", red_unlock_score},
+        {"zone1_score_additional_7", red_unlock_time_ >= 0 ? (-1 * static_cast<int>(red_unlock_time_)) : 0},
+        {"zone1_score_additional_8", 0},
+        // Additional scores for blue team
+        {"zone2_score_additional_1", blue_bingo_count},
+        {"zone2_score_additional_2", blue_spot_total},
+        {"zone2_score_additional_3", blue_type3},
+        {"zone2_score_additional_4", blue_type2},
+        {"zone2_score_additional_5", blue_type1},
+        {"zone2_score_additional_6", blue_unlock_score},
+        {"zone2_score_additional_7", blue_unlock_time_ >= 0 ? (-1 * static_cast<int>(blue_unlock_time_)) : 0},
+        {"zone2_score_additional_8", 0},
         {"vgole", winner.v_goal},
         {"vgole_time", winner.v_goal ? time_sec : 0},
     };
