@@ -29,3 +29,8 @@ launch:
     -
       name: "api_key"
       value: "$(var api_key)"
+
+- node:
+    pkg: "led_manager"
+    exec: "led_manager"
+    name: "led_manager"
