@@ -45,6 +45,98 @@ private:
   bool is_match_end_ = true;
   bool is_match_confirmed_ = true;
 
+  // Ownership grid: 0 = none, 1 = red, 2 = blue
+  int grid_owner_[3][3] = {{0}}; // [row][col], type_1_a = [0][0], type_1_b = [0][1], ..., type_3_c = [2][2]
+
+  // Helper: get cell count for a team
+  int get_cell_count(const game_state_interfaces::msg::Team &team, int row, int col) {
+    if (row == 0 && col == 0)
+      return team.type_1_a;
+    if (row == 0 && col == 1)
+      return team.type_1_b;
+    if (row == 0 && col == 2)
+      return team.type_1_c;
+    if (row == 1 && col == 0)
+      return team.type_2_a;
+    if (row == 1 && col == 1)
+      return team.type_2_b;
+    if (row == 1 && col == 2)
+      return team.type_2_c;
+    if (row == 2 && col == 0)
+      return team.type_3_a;
+    if (row == 2 && col == 1)
+      return team.type_3_b;
+    if (row == 2 && col == 2)
+      return team.type_3_c;
+    return 0;
+  }
+
+  // Update grid ownership after score change
+  void update_grid_ownership() {
+    for (int row = 0; row < 3; ++row) {
+      for (int col = 0; col < 3; ++col) {
+        int red_count = get_cell_count(current_match_.red_team, row, col);
+        int blue_count = get_cell_count(current_match_.blue_team, row, col);
+        if (red_count > blue_count) {
+          grid_owner_[row][col] = 1;
+        } else if (blue_count > red_count) {
+          grid_owner_[row][col] = 2;
+        } else {
+          grid_owner_[row][col] = 0;
+        }
+      }
+    }
+    // Update current_match_ cell ownership info
+    current_match_.type_1_a = grid_owner_[0][0] == 1   ? game_state_interfaces::msg::Match::RED
+                              : grid_owner_[0][0] == 2 ? game_state_interfaces::msg::Match::BLUE
+                                                       : game_state_interfaces::msg::Match::UNKNOWN;
+    current_match_.type_1_b = grid_owner_[0][1] == 1   ? game_state_interfaces::msg::Match::RED
+                              : grid_owner_[0][1] == 2 ? game_state_interfaces::msg::Match::BLUE
+                                                       : game_state_interfaces::msg::Match::UNKNOWN;
+    current_match_.type_1_c = grid_owner_[0][2] == 1   ? game_state_interfaces::msg::Match::RED
+                              : grid_owner_[0][2] == 2 ? game_state_interfaces::msg::Match::BLUE
+                                                       : game_state_interfaces::msg::Match::UNKNOWN;
+    current_match_.type_2_a = grid_owner_[1][0] == 1   ? game_state_interfaces::msg::Match::RED
+                              : grid_owner_[1][0] == 2 ? game_state_interfaces::msg::Match::BLUE
+                                                       : game_state_interfaces::msg::Match::UNKNOWN;
+    current_match_.type_2_b = grid_owner_[1][1] == 1   ? game_state_interfaces::msg::Match::RED
+                              : grid_owner_[1][1] == 2 ? game_state_interfaces::msg::Match::BLUE
+                                                       : game_state_interfaces::msg::Match::UNKNOWN;
+    current_match_.type_2_c = grid_owner_[1][2] == 1   ? game_state_interfaces::msg::Match::RED
+                              : grid_owner_[1][2] == 2 ? game_state_interfaces::msg::Match::BLUE
+                                                       : game_state_interfaces::msg::Match::UNKNOWN;
+    current_match_.type_3_a = grid_owner_[2][0] == 1   ? game_state_interfaces::msg::Match::RED
+                              : grid_owner_[2][0] == 2 ? game_state_interfaces::msg::Match::BLUE
+                                                       : game_state_interfaces::msg::Match::UNKNOWN;
+    current_match_.type_3_b = grid_owner_[2][1] == 1   ? game_state_interfaces::msg::Match::RED
+                              : grid_owner_[2][1] == 2 ? game_state_interfaces::msg::Match::BLUE
+                                                       : game_state_interfaces::msg::Match::UNKNOWN;
+    current_match_.type_3_c = grid_owner_[2][2] == 1   ? game_state_interfaces::msg::Match::RED
+                              : grid_owner_[2][2] == 2 ? game_state_interfaces::msg::Match::BLUE
+                                                       : game_state_interfaces::msg::Match::UNKNOWN;
+  }
+
+  // Count bingos for a team (team_id: 1=red, 2=blue)
+  int count_bingo(int team_id) {
+    int bingo_count = 0;
+    // Rows
+    for (int row = 0; row < 3; ++row) {
+      if (grid_owner_[row][0] == team_id && grid_owner_[row][1] == team_id && grid_owner_[row][2] == team_id)
+        ++bingo_count;
+    }
+    // Columns
+    for (int col = 0; col < 3; ++col) {
+      if (grid_owner_[0][col] == team_id && grid_owner_[1][col] == team_id && grid_owner_[2][col] == team_id)
+        ++bingo_count;
+    }
+    // Diagonals
+    if (grid_owner_[0][0] == team_id && grid_owner_[1][1] == team_id && grid_owner_[2][2] == team_id)
+      ++bingo_count;
+    if (grid_owner_[0][2] == team_id && grid_owner_[1][1] == team_id && grid_owner_[2][0] == team_id)
+      ++bingo_count;
+    return bingo_count;
+  }
+
   bool _match_already_set(game_state_interfaces::msg::Match &m) { return current_match_.id == m.id; }
 
   bool _is_match_ready() { return !is_match_start_ && !is_match_confirmed_; }
@@ -108,6 +200,21 @@ private:
     type2_score = team.type_2_a * Score::TYPE_2 + team.type_2_b * Score::TYPE_2 + team.type_2_c * Score::TYPE_2;
     type3_score = team.type_3_a * Score::TYPE_3 + team.type_3_b * Score::TYPE_3 + team.type_3_c * Score::TYPE_3;
     team.score = unlock_score + type1_score + type2_score + type3_score;
+
+    // Update grid ownership and count bingos
+    update_grid_ownership();
+    int red_bingo_count = count_bingo(1);
+    int blue_bingo_count = count_bingo(2);
+
+    // You can add logic here if you want to do something when bingo is achieved
+    if (red_bingo_count > 0) {
+      RCLCPP_INFO(this->get_logger(), "Red team achieved %d BINGO(s)!", red_bingo_count);
+      // Optionally: team.score += bonus * red_bingo_count;
+    }
+    if (blue_bingo_count > 0) {
+      RCLCPP_INFO(this->get_logger(), "Blue team achieved %d BINGO(s)!", blue_bingo_count);
+      // Optionally: team.score += bonus * blue_bingo_count;
+    }
   }
 
 public:
@@ -208,11 +315,24 @@ public:
     current_match_.blue_team.type_3_c = 0;
     current_match_.blue_team.v_goal = false;
     current_match_.blue_team.score = 0;
-
+    current_match_.type_1_a = game_state_interfaces::msg::Match::UNKNOWN;
+    current_match_.type_1_b = game_state_interfaces::msg::Match::UNKNOWN;
+    current_match_.type_1_c = game_state_interfaces::msg::Match::UNKNOWN;
+    current_match_.type_2_a = game_state_interfaces::msg::Match::UNKNOWN;
+    current_match_.type_2_b = game_state_interfaces::msg::Match::UNKNOWN;
+    current_match_.type_2_c = game_state_interfaces::msg::Match::UNKNOWN;
+    current_match_.type_3_a = game_state_interfaces::msg::Match::UNKNOWN;
+    current_match_.type_3_b = game_state_interfaces::msg::Match::UNKNOWN;
+    current_match_.type_3_c = game_state_interfaces::msg::Match::UNKNOWN;
     current_match_.start_time.sec = 0;
     current_match_.start_time.nanosec = 0;
     current_match_.end_time.sec = 0;
     current_match_.end_time.nanosec = 0;
+
+    // Reset grid ownership
+    for (int row = 0; row < 3; ++row)
+      for (int col = 0; col < 3; ++col)
+        grid_owner_[row][col] = 0;
   }
 
   void start_match(const std_srvs::srv::Empty_Request::SharedPtr, const std_srvs::srv::Empty_Response::SharedPtr) {
@@ -364,6 +484,10 @@ public:
         RCLCPP_INFO(this->get_logger(), "score : %d", winner.score);
       }
     }
+    int red_bingo_count = count_bingo(1);
+    int blue_bingo_count = count_bingo(2);
+    RCLCPP_INFO(this->get_logger(), "Red team BINGO count: %d", red_bingo_count);
+    RCLCPP_INFO(this->get_logger(), "Blue team BINGO count: %d", blue_bingo_count);
     RCLCPP_INFO(this->get_logger(), "===================");
   }
 };

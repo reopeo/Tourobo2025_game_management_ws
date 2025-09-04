@@ -15,3 +15,14 @@ game_state_interfaces/Team red_team
 game_state_interfaces/Team blue_team
 
 int32 winner
+
+# bingo
+int32 type_1_a
+int32 type_1_b
+int32 type_1_c
+int32 type_2_a
+int32 type_2_b
+int32 type_2_c
+int32 type_3_a
+int32 type_3_b
+int32 type_3_c
