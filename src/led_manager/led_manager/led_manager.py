@@ -47,9 +47,9 @@ class LedManagerNode(Node):
     def match_status_callback(self, msg: Match):
         # type_1_a～type_3_cをLED 0～8に割り当て
         type_fields = [
-            msg.type_1_a, msg.type_1_b, msg.type_1_c,
-            msg.type_2_a, msg.type_2_b, msg.type_2_c,
-            msg.type_3_a, msg.type_3_b, msg.type_3_c
+            msg.type_3_c, msg.type_2_c, msg.type_1_c,
+            msg.type_3_b, msg.type_2_b, msg.type_1_b,
+            msg.type_2_a, msg.type_1_a, msg.type_3_a
         ]
         # LED状態: {led_id: color_code}
         led_states = {i: type_fields[i] for i in range(9)}

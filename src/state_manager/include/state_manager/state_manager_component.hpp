@@ -336,6 +336,7 @@ public:
     current_match_.blue_team.unlock = 0;
     current_match_.blue_team.type_1_a = 0;
     current_match_.blue_team.type_1_b = 0;
+    current_match_.blue_team.type_1_c = 0;
     current_match_.blue_team.type_2_a = 0;
     current_match_.blue_team.type_2_b = 0;
     current_match_.blue_team.type_2_c = 0;
